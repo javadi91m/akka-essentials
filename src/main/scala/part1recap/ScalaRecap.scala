@@ -19,7 +19,9 @@ object ScalaRecap {
 
   // OOP
   class Animal
+
   class Cat extends Animal
+
   trait Carnivore {
     def eat(animal: Animal): Unit
   }
@@ -51,13 +53,13 @@ object ScalaRecap {
   val incremented = incrementer(4) // 5, same as incrementer.apply(4)
 
   // map flatMap filter = HOFs
-  val processedList = List(1,2,3).map(incrementer) // [2,3,4]
-  val aLongerList = List(1,2,3).flatMap(x => List(x, x + 1)) // [1,2, 2,3, 3,4]
+  val processedList = List(1, 2, 3).map(incrementer) // [2,3,4]
+  val aLongerList = List(1, 2, 3).flatMap(x => List(x, x + 1)) // [1,2, 2,3, 3,4]
 
   // for-comprehensions
-  val checkerboard = List(1,2,3).flatMap(n => List('a', 'b', 'c').map(c => (n, c)))
+  val checkerboard = List(1, 2, 3).flatMap(n => List('a', 'b', 'c').map(c => (n, c)))
   val checkerboard_v2 = for {
-    n <- List(1,2,3)
+    n <- List(1, 2, 3)
     c <- List('a', 'b', 'c')
   } yield (n, c) // same
 
@@ -85,8 +87,14 @@ object ScalaRecap {
   // Futures
   implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))
   val aFuture = Future(/* something to be evaluated on another thread*/ 1 + 41)
+  val anExplicitFuture = Future(1 + 41)(ec)
 
   // register callback when it finishes
+  aFuture.onComplete(t => t match {
+    case Success(value) => println(s"the async meaning of life is $value")
+    case Failure(exception) => println(s"the meaning of value failed: $exception")
+  })
+  // we can simplify it by eliminating (try => try match) => partial function
   aFuture.onComplete {
     case Success(value) => println(s"the async meaning of life is $value")
     case Failure(exception) => println(s"the meaning of value failed: $exception")
@@ -103,8 +111,9 @@ object ScalaRecap {
   // implicits
 
   // 1 - implicit arguments and values
-  implicit val timeout: Int = 3000 // implicit val == given instance
-  def setTimeout(f: () => Unit)(implicit tout: Int) = { // (using tout: Int)
+  implicit val timeout: Int = 3000 // in Scala 3: implicit val = given instance (only keyword has changed. the mechanism is exactly the same.
+
+  def setTimeout(f: () => Unit)(implicit tout: Int) = { // in Scala 3: (using tout: Int)
     Thread.sleep(tout)
     f()
   }
@@ -112,13 +121,16 @@ object ScalaRecap {
   setTimeout(() => println("timeout")) // (timeout)
 
   // 2 - extension methods
-  implicit class MyRichInt(number: Int) { // implicit class = extension
+  // an implicit class needs to take exactly one argument as its constructor
+  implicit class MyRichInt(number: Int) { // in Scala 3: implicit class = extension
     def isEven: Boolean = number % 2 == 0
   }
 
   val is2Even = 2.isEven // new RichInt(2).isEven
 
   // 3 - conversions
+  // conversions are very dangerous and generally discouraged \
+  // => in Scala 3 they have been moved into a special package that we need to import and we also need to do some other actions prior to that
   implicit def string2Person(name: String): Person =
     Person(name, 57)
 
@@ -127,4 +139,5 @@ object ScalaRecap {
   def main(args: Array[String]): Unit = {
 
   }
+
 }
