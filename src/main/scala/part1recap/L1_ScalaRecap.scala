@@ -4,7 +4,7 @@ import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Try, Success, Failure}
 
-object ScalaRecap {
+object L1_ScalaRecap {
 
   // value
   val aBoolean: Boolean = false
