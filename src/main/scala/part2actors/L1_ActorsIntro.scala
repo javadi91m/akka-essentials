@@ -3,7 +3,7 @@ package part2actors
 import akka.actor.typed.{ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 
-object L1_ActorsIntro {
+object L1_ActorsIntro extends App {
 
   /*
   in Actors we use a different programming paradigm.
@@ -121,7 +121,7 @@ object L1_ActorsIntro {
    *  - the happy behavior will turn to sad() if it receives "Akka is bad."
    *  - the sad behavior will turn to happy() if it receives "Akka is awesome!"
    *
-   * 3. Inspect my code and try to make it better.
+   * 3. Inspect my code and try to make it better (WeirdActor).
    */
 
   object Person {
@@ -163,6 +163,10 @@ object L1_ActorsIntro {
     person.terminate()
   }
 
+  // here the problem is we want to consume both Int AND String with the same Behavior
+  // since there's no common ancestor between String AND Int, we'll end up using Any
+  // using Any makes this behavior really really broad/general, it means it'll consume all other UNWANTED types as well
+  // solution: we can create a message type hierarchy and then extend it to implement int/String messages
   object WeirdActor {
     // wants to receive messages of type Int AND String
     def apply(): Behavior[Any] = Behaviors.receive { (context, message) =>
@@ -205,10 +209,6 @@ object L1_ActorsIntro {
 
     Thread.sleep(1000)
     weirdActor.terminate()
-  }
-
-  def main(args: Array[String]): Unit = {
-    demoSimpleActor()
   }
 
 }
