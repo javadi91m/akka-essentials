@@ -208,7 +208,7 @@ object L1_ActorsIntro {
   }
 
   def main(args: Array[String]): Unit = {
-
+    demoSimpleActor()
   }
 
 }
