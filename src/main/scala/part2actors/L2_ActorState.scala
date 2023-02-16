@@ -3,7 +3,31 @@ package part2actors
 import akka.actor.typed.{ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 
-object ActorState {
+object L2_ActorState extends App {
+
+  /*
+  Akka has a thread pool that is shared with Actors (plz check src/main/scala/part2actors/L2-01.png)
+  an Actor is just a data structure that has a message handler (the same Behavior we define for it) and a message Queue that keeps that message sent to it
+  this Actor is passive and cannot handle any message, so it needs a thread to process the message stored in its queue
+  so the way that Akka works is that it has a thread pool (maybe tens or at most hundreds). then this thread pool can handle millions of Actors.
+
+  how it works?
+  Akka schedules actors to be executed by thread pool.
+  when we send a message to an actor, the message will be added to its queue. then Akka schedules a thread to run this actor,
+  so at some point, a thread will take control of this actor and it'll start extracting messages from actor's queue and this happens in-order. then for each message, message-handler will be called by thread
+  and as result, actor might change its state or even send messages to other actors. after that, the message will be simply discarded.
+  at some point, Akka might decide to release the thread from that actor and do something else by that thread (maybe it takes control of another actor)
+
+  this whole process, offers us some guarantees:
+  1.  only one thread operates on an actor at any time, which makes actors effectively single-threaded.
+      it means we don't need to do any locking/synchronization over the actor state.
+      a thread will never abandon processing a message at the middle of it. so processing a message will be atomic.
+
+  2. Akka offers "at most once delivery" as message delivery guarantee, so an Actor never receives duplicate messages
+
+  3. for any sender/receiver pair, the message order is kept.
+   */
+
 
   /*
     Exercise: use the setup method to create a word counter which
@@ -23,6 +47,9 @@ object ActorState {
       }
     }
   }
+
+  // although using var is discouraged, using var (inside a Behaviors.setup) can solve out problem.
+  // but handling state using a var like above, can be tedious. as an example, consider below:
 
   trait SimpleThing
   case object EatChocolate extends SimpleThing
@@ -73,6 +100,10 @@ object ActorState {
       message match {
         case EatChocolate =>
           context.log.info(s"[$happiness] Eating chocolate")
+
+          // NOTE: it's not a recursion: it's just invocation of a method that returns a new data structure (Actor)
+          // this new Behavior will be used to handle NEXT message at some point in the future. it might not be even the same thread
+          // here instead of using a variable for managing the state, we're returning a NEW Behavior with a new argument as its state
           statelessHuman(happiness + 1)
         case CleanUpTheFloor =>
           context.log.info(s"[$happiness] Wiping the floor, ugh...")
@@ -116,7 +147,4 @@ object ActorState {
     wordCounter.terminate()
   }
 
-  def main(args: Array[String]): Unit = {
-    demoWordCounter()
-  }
 }
