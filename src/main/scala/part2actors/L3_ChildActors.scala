@@ -57,7 +57,7 @@ object L3_ChildActors extends App {
     def active(childRef: ActorRef[String]): Behavior[Command] = Behaviors.receive[Command] { (context, message) =>
       message match {
         case TellChild(message) =>
-          context.log.info(s"[parent] Sending message $message to child")
+          context.log.info(s"[parent] Sending message $message to ${childRef.path.name}")
           childRef ! message // <- send a message to another actor
           Behaviors.same
         case StopChild =>
@@ -74,8 +74,9 @@ object L3_ChildActors extends App {
       }
     }
       .receiveSignal {
-        case (context, Terminated(childRefWhichDied)) =>
-          context.log.info(s"[parent] Child ${childRefWhichDied.path} was killed by something...")
+        // we can receive the signal when the child is Stopped.
+        case (context, Terminated(childRefWhichStopped)) =>
+          context.log.info(s"[parent] Child ${childRefWhichStopped.path} was killed by something...")
           idle()
       }
   }
@@ -144,12 +145,12 @@ object L3_ChildActors extends App {
         case StopChild(name) =>
           context.log.info(s"[parent] attempting to stop child with name $name")
           val childOption = children.get(name)
-          childOption.fold(context.log.info(s"[parent] Child $name could not be stopped: name doesn't exist"))(context.stop)
+          childOption.fold(context.log.info(s"[parent] Child $name could not be stopped: name doesn't exist"))(context.stop(_))
           active(children - name)
         case WatchChild(name) =>
           context.log.info(s"[parent] watching child actor with the name $name")
           val childOption = children.get(name)
-          childOption.fold(context.log.info(s"[parent] Cannot watch $name: name doesn't exist"))(context.watch)
+          childOption.fold(context.log.info(s"[parent] Cannot watch $name: name doesn't exist"))(context.watch(_))
           Behaviors.same
       }
     }
