@@ -16,9 +16,14 @@ import scala.collection.mutable.{Map => MutableMap}
   - if you have to use a mutable data structure (or even using a var) in an Actor, make sure that data will never leave your Actor and stays only within your Actor
 
   B) NEVER PASS THE CONTEXT REFERENCE TO OTHER ACTORS. => because other Actors may influence your internal state and then you'll have no idea where that state change came from!!!
+
   points A, B are the same when you use Futures in Actors. the reason is that when we write some code on "onComplete" or even "map",
   that code will be run somewhere in the future and probably by a different thread.
   so even if the code belongs to the internal of the same actor, that code will actually run on another thread from outside of the Actor!
+  NOTE: although we said there's only one thread at a time is assigned to the Actor by Akka,
+  but it is also possible while a thread (assigned by Akka to the Actor) is processing a message, there's also another thread processing a Future in the actor.
+  so as a best practice, Future callbacks should send message to Actor as fact of completion/failure. Actor state should never been changed in Futures. State should be changed based on Actor incoming events/messages only
+
  */
 object L6_BreakingActorEncapsulation {
 
