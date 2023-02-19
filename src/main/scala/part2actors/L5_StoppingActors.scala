@@ -14,7 +14,7 @@ object L5_StoppingActors {
         // "Behaviors.stopped" means this Actor will not receive any more messages and Akka runtime will terminate this Actor
         Behaviors.stopped // optionally pass a callback: {() => Unit} this callback will be executed after this Actor is stopped. use case: to clear up resources after the actor is stopped
         // NOTE: a parent can also stop its DIRECT children by calling: {context.stop(childRef)} => this method only works for direct CHILD Actors, i.e. the context which you're using, must belong to the i=the direct parent of the child you try to stop
-        // in such a case, we can receive the signal in the parent as well. see part2actors/L3_ChildActors.scala:77
+        // in such a case, we can receive the signal in the parent as well, but first the parent needs to WATCH the child. see part2actors/L3_ChildActors.scala:77
       }
       else
         Behaviors.same

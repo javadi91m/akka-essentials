@@ -1,6 +1,6 @@
 package part2actors
 
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, PostStop, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
 
 object L3_ChildActors extends App {
@@ -54,6 +54,7 @@ object L3_ChildActors extends App {
       }
     }
 
+    // after adding .receiveSignal, we need to specify the type [Command] in Behaviors.receive[Command], otherwise the compiler will complain
     def active(childRef: ActorRef[String]): Behavior[Command] = Behaviors.receive[Command] { (context, message) =>
       message match {
         case TellChild(message) =>
@@ -62,10 +63,17 @@ object L3_ChildActors extends App {
           Behaviors.same
         case StopChild =>
           context.log.info("[parent] stopping child")
-          context.stop(childRef) // only works with CHILD actors
+          context.stop(childRef) // only works with DIRECT CHILD actors
           idle()
         case WatchChild =>
           context.log.info("[parent] watching child")
+          // by calling "context.watch(anyActorRef)", this Actor will receive "Terminated(anyActorRef)" signal when "anyActorRef" has stopped
+          // this "anyActorRef" doesn't have to be its direct child and can be simply any Actor reference
+          // after watching a ref and registering for its Termination, we can call unwatch with passing the same ref and deregister ourself from getting its Termination signal
+          // some NOTES here:
+              // 1. the Terminated signal will be sent even if the watched Actor is already dead at registration time
+              // 2. registering multiple times may/may not generate multiple Terminated signals
+              // 3. unwatching will not process Terminated signals even if they have already been enqueued
           context.watch(childRef) // can use any ActorRef
           Behaviors.same
         case _ =>
@@ -74,7 +82,8 @@ object L3_ChildActors extends App {
       }
     }
       .receiveSignal {
-        // we can receive the signal when the child is Stopped.
+        // we can receive the signal when the child is Stopped, but first the parent must watch the child: L3_ChildActors.scala:70
+        // NOTE: child itself can still receive its PostStop signal. see L3_ChildActors.scala:94
         case (context, Terminated(childRefWhichStopped)) =>
           context.log.info(s"[parent] Child ${childRefWhichStopped.path} was killed by something...")
           idle()
@@ -83,10 +92,15 @@ object L3_ChildActors extends App {
 
   object Child {
     // context.self is the ActorRef in Akka
-    def apply(): Behavior[String] = Behaviors.receive { (context, message) =>
+    def apply(): Behavior[String] = Behaviors.receive[String] { (context, message) =>
       context.log.info(s"[${context.self.path.name}] Received $message")
       Behaviors.same
     }
+      .receiveSignal {
+        case (context, PostStop) =>
+          context.log.info(s"${context.self.path.name}: I'm stopped!!!!!!")
+          Behaviors.same
+      }
   }
 
   def demoParentChild(): Unit = {
@@ -113,7 +127,7 @@ object L3_ChildActors extends App {
     system.terminate()
   }
 
-  demoParentChild()
+  demoParentChild_v2()
 
   /**
    * Exercise: write a Parent_V2 that can manage MULTIPLE child actors.
