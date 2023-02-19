@@ -1,25 +1,43 @@
 package part2actors
+
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 
 import scala.collection.mutable.{Map => MutableMap}
 
 /*
-  NEVER PASS MUTABLE STATE TO OTHER ACTORS.
-  NEVER PASS THE CONTEXT REFERENCE TO OTHER ACTORS.
-  Same for Futures.
+  remember we said Actors are effectively single-threaded and encapsulated,
+  because we can never an Actor's mutable state unless we interact with it via sending a message
+  and only that Actor SHOULD have access to its own internal state.
+  but this is a delicate subject and can be easily mistreated!
+
+  A) NEVER PASS MUTABLE STATE TO OTHER ACTORS. => because there will be a race condition for sure!!!
+  - if you want to pass data to other Actors, that's fine. but make sure it is IMMUTABLE.
+  - if you have to use a mutable data structure (or even using a var) in an Actor, make sure that data will never leave your Actor and stays only within your Actor
+
+  B) NEVER PASS THE CONTEXT REFERENCE TO OTHER ACTORS. => because other Actors may influence your internal state and then you'll have no idea where that state change came from!!!
+  points A, B are the same when you use Futures in Actors. the reason is that when we write some code on "onComplete" or even "map",
+  that code will be run somewhere in the future and probably by a different thread.
+  so even if the code belongs to the internal of the same actor, that code will actually run on another thread from outside of the Actor!
  */
-object BreakingActorEncapsulation {
+object L6_BreakingActorEncapsulation {
 
   // naive bank account
+  // we should always avoid such a structure!
   trait AccountCommand
+
   case class Deposit(cardId: String, amount: Double) extends AccountCommand
+
   case class Withdraw(cardId: String, amount: Double) extends AccountCommand
+
   case class CreateCreditCard(cardId: String) extends AccountCommand
+
   case object CheckCardStatuses extends AccountCommand
 
   trait CreditCardCommand
+
   case class AttachToAccount(balances: MutableMap[String, Double], cards: MutableMap[String, ActorRef[CreditCardCommand]]) extends CreditCardCommand
+
   case object CheckStatus extends CreditCardCommand
 
   object NaiveBankAccount {
