@@ -68,9 +68,13 @@ class EssentialTestingSpec extends ScalaTestWithActorTestKit with AnyWordSpecLik
 object EssentialTestingSpec {
   // code under test
   trait SimpleProtocol
+
   case class SimpleMessage(message: String, sender: ActorRef[SimpleProtocol]) extends SimpleProtocol
+
   case class UppercaseString(message: String, replyTo: ActorRef[SimpleProtocol]) extends SimpleProtocol
+
   case class FavoriteTech(replyTo: ActorRef[SimpleProtocol]) extends SimpleProtocol
+
   case class SimpleReply(contents: String) extends SimpleProtocol
 
   object SimpleActor {
