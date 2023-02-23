@@ -19,12 +19,14 @@ class UsingProbesSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
       externalProbe.expectMessage(RegisterAck)
     }
 
+    // we can mock the interaction with the worker actor: we can simply send a message to the master on behalf of Worker
     "send a task to the worker actor" in {
       val master = testKit.spawn(Master())
       val workerProbe = testKit.createTestProbe[WorkerTask]()
       val externalProbe = testKit.createTestProbe[ExternalProtocol]()
 
       master ! Register(workerProbe.ref, externalProbe.ref)
+      // when we send a message to a probe, it stores them in a Queue. and whenever we call probe.expectMessage, it'll extract the first message from the queue and use it for comparison
       externalProbe.expectMessage(RegisterAck)
 
       val taskString = "I love Akka"
@@ -36,6 +38,7 @@ class UsingProbesSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
       externalProbe.expectMessage(Report(3))
     }
 
+    // we can mock the whole Worker Actor: we can customize the Behavior of the TestProbe
     "aggregate data correctly" in {
       val master = testKit.spawn(Master())
       val externalProbe = testKit.createTestProbe[ExternalProtocol]()
@@ -46,9 +49,11 @@ class UsingProbesSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
           Behaviors.same
       }
 
+      // this is how we mock the Behavior of the Probe: by calling Behaviors.monitor
       val workerProbe = testKit.createTestProbe[WorkerTask]()
       val mockedWorker = testKit.spawn(Behaviors.monitor(workerProbe.ref, mockedWorkerBehavior))
 
+      // here we need to register the mocked worker and not the probe one
       master ! Register(mockedWorker, externalProbe.ref)
       externalProbe.expectMessage(RegisterAck)
 

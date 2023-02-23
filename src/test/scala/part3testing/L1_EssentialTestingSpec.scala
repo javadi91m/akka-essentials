@@ -22,6 +22,7 @@ class EssentialTestingSpec extends ScalaTestWithActorTestKit with AnyWordSpecLik
       simpleActor ! SimpleMessage("Akka", probe.ref)
 
       // assertions
+      // when we send a message to a probe, it stores them in a Queue. and whenever we call probe.expectMessage, it'll extract the first message from the queue and use it for comparison
       probe.expectMessage(SimpleReply("AkkaAkka"))
     }
   }
