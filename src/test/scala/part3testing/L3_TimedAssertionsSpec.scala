@@ -24,6 +24,7 @@ class TimedAssertionsSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike
     "reply with the meaning of life in at least half a second" in {
       worker ! Work(probe.ref)
       probe.expectNoMessage(500.millis)
+      // we already waited 500ms and here we say that we want to wait AT MOST 500 more milliseconds
       probe.expectMessage(500.millis, WorkResult(42))
     }
 
