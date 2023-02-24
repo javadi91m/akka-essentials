@@ -6,9 +6,9 @@ import akka.actor.typed.{ActorRef, Behavior}
 import org.scalatest.wordspec.AnyWordSpecLike
 import scala.concurrent.duration._
 
-class EssentialTestingSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
+class L1_EssentialTestingSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
 
-  import EssentialTestingSpec._
+  import L1_EssentialTestingSpec._
 
   "A simple actor" should {
     // test suite
@@ -66,7 +66,7 @@ class EssentialTestingSpec extends ScalaTestWithActorTestKit with AnyWordSpecLik
   }
 }
 
-object EssentialTestingSpec {
+object L1_EssentialTestingSpec {
   // code under test
   trait SimpleProtocol
 

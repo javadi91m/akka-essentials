@@ -8,9 +8,9 @@ import scala.concurrent.duration._
 
 import scala.util.Random
 
-class TimedAssertionsSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
+class L3_TimedAssertionsSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
 
-  import TimedAssertionsSpec._
+  import L3_TimedAssertionsSpec._
 
   "A worker actor" should {
     val worker = testKit.spawn(WorkerActor())
@@ -51,7 +51,7 @@ class TimedAssertionsSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike
   }
 }
 
-object TimedAssertionsSpec {
+object L3_TimedAssertionsSpec {
   trait ResultMessage
   case class WorkResult(result: Int) extends ResultMessage
 

@@ -5,26 +5,30 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class InterceptingLogsSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
+class L4_InterceptingLogsSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
 
-  import InterceptingLogsSpec._
+  import L4_InterceptingLogsSpec._
 
   val item = "Rock the JVM Akka course"
   val creditCard = "1234-1234-1234-1234" // valid card
   val invalidCard = "0000-0000-0000-0000"
 
+  // we can use this technique in integrations tests when the system is complex and the interactions are not that simple to mock
+  // in FulfillmentManager we can see this log: context.log.info(s"Order $orderId for item $item has been dispatched.")
+  // we can consider log above as a successful scenario. so if we could somehow inspect the logs and confirm such a log is there,
+  // we can confirm the flow was successful
   "A checkout flow" should {
     "correctly dispatch an order for a valid credit card" in {
       LoggingTestKit.info("Order") // filter log messages of level INFO which contain the string "Order"
         .withMessageRegex(s"Order [0-9]+ for item $item has been dispatched.")
         .withOccurrences(1)
-        .expect { // scenario under test
+        .expect { // code under test
           val checkoutActor = testKit.spawn(CheckoutActor())
           checkoutActor ! Checkout(item, creditCard)
         }
     }
 
-    "freak out if the payment is declined" in {
+    "throw a RuntimeException if the payment is declined" in {
       LoggingTestKit.error[RuntimeException]
         .withOccurrences(1)
         .expect {
@@ -35,11 +39,18 @@ class InterceptingLogsSpec extends ScalaTestWithActorTestKit with AnyWordSpecLik
   }
 }
 
-object InterceptingLogsSpec {
+object L4_InterceptingLogsSpec {
 
-  // payment system
   /*
-    checkout actor -> payment manager
+    we're trying to create a simple payment system which has 3 Actors:
+    1. Checkout Actor: this Actor validates the payment through a payment manager
+          Checkout asks payment manager Actor. then payment manager replies back to Checkout
+    2. payment manager: validates the payment: it checks the credit card and ...
+    3. FulfillmentManager: then Checkout Actor communicates with a FulfillmentManager to dispatch the order
+          then FulfillmentManager replies back to the Checkout
+
+
+    Checkout actor -> payment manager
                    <-
 
                    -> fulfillment manager
@@ -54,6 +65,8 @@ object InterceptingLogsSpec {
   case object OrderConfirmed extends PaymentProtocol
 
   object CheckoutActor {
+
+    // Behaviors.setup can be used for writing complex scenarios
     def apply(): Behavior[PaymentProtocol] = Behaviors.setup { context =>
       val paymentManager = context.spawn(PaymentManager(), "paymentManager")
       val fulfillmentManager = context.spawn(FulfillmentManager(), "fulfillmentManager")

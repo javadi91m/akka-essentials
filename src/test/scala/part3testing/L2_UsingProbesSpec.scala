@@ -5,9 +5,9 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class UsingProbesSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
+class L2_UsingProbesSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
 
-  import UsingProbesSpec._
+  import L2_UsingProbesSpec._
 
   "A master actor" should {
     "register a worker" in {
@@ -68,7 +68,7 @@ class UsingProbesSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
   }
 }
 
-object UsingProbesSpec {
+object L2_UsingProbesSpec {
 
   /*
     requester -> master -> worker
