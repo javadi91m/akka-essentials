@@ -9,6 +9,11 @@ import scala.concurrent.duration._
 object L2_Schedulers {
 
   // Actors can be scheduled to send a message at a particular time
+  // IMPORTANT: when the scheduler is triggered, it won't necessarily be run in the same thread which is assigned to the actor.
+  // therefore it won't be safe to change the state of the self in the schedulers
+  // Akka uses the same thread pool for Actors to run context.scheduleOnce as well.
+
+  // IMPORTANT: always cancel the schedulers you don't need anymore. otherwise you may encounter some serious bugs
   object LoggerActor {
     def apply(): Behavior[String] = Behaviors.receive { (context, message) =>
       context.log.info(s"[${context.self.path}] Received: $message")
@@ -36,6 +41,7 @@ object L2_Schedulers {
 
     // while importing system.executionContext and working with Futures, ..., be careful not to use system.executionContext for running Futures
     import system.executionContext
+    // be careful not to schedule too many by using system.executionContext, otherwise the Actor system will starve
     system.scheduler.scheduleOnce(2.seconds, () => system.terminate())
   }
 
