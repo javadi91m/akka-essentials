@@ -3,6 +3,8 @@ import akka.actor.typed.scaladsl.Behaviors
 
 import scala.concurrent.duration.FiniteDuration
 
+// we're defining these inside a package object so we can access them as top level objects
+// in scala 3, we just need to defined an arbitrary class and define them on top level
 package object utils {
 
   object LoggerActor {
@@ -19,4 +21,5 @@ package object utils {
       system
     }
   }
+
 }

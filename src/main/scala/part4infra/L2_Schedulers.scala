@@ -6,8 +6,9 @@ import akka.actor.typed.scaladsl.Behaviors
 
 import scala.concurrent.duration._
 
-object Schedulers {
+object L2_Schedulers {
 
+  // Actors can be scheduled to send a message at a particular time
   object LoggerActor {
     def apply(): Behavior[String] = Behaviors.receive { (context, message) =>
       context.log.info(s"[${context.self.path}] Received: $message")
@@ -19,6 +20,8 @@ object Schedulers {
     val userGuardian = Behaviors.setup[Unit] { context =>
       val loggerActor = context.spawn(LoggerActor(), "loggerActor")
 
+      // Actors can be scheduled to only send a message once
+      // we can have access to the system scheduler from within the Actor context: context.system.scheduler
       context.log.info("[system] System starting")
       context.scheduleOnce(1.second, loggerActor, "reminder")
 
@@ -27,13 +30,21 @@ object Schedulers {
 
     val system = ActorSystem(userGuardian, "DemoScheduler")
 
+    // ActorSystem has richer APIs regarding scheduling
+    // it can be scheduled at fixed rates. it also can take an arbitrary lambda and execute it on top of a thread pool => we can use System's thread pool system.executionContext
+    // we can also have access to the system scheduler from within the Actor context: context.system.scheduler
+
+    // while importing system.executionContext and working with Futures, ..., be careful not to use system.executionContext for running Futures
     import system.executionContext
     system.scheduler.scheduleOnce(2.seconds, () => system.terminate())
   }
 
-  // timeout pattern
+  // context.scheduleOnce is really useful when we want to implement a timeout pattern
+
   def demoActorWithTimeout(): Unit = {
+    // we can create an Actor that closes itself after a duration
     val timeoutActor: Behavior[String] = Behaviors.receive { (context, message) =>
+      // schedule below has its own APIs and we can call cancel on it and cancel the scheduler
       val schedule = context.scheduleOnce(1.second, context.self, "timeout")
 
       message match {
@@ -101,4 +112,5 @@ object Schedulers {
   def main(args: Array[String]): Unit = {
     demoActorResettingTimeout()
   }
+
 }
