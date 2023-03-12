@@ -9,9 +9,9 @@ import scala.util.{Failure, Success, Try}
 import utils._
 import scala.concurrent.duration._
 
-object PipeDemo {
+object L2_PipeDemo {
 
-  // interaction with an external service that returns Futures
+  // it's useful when we want to interact with an external service that returns Futures
   val db: Map[String, Int] = Map(
     "Daniel" -> 123,
     "Jane" -> 456,
@@ -38,7 +38,7 @@ object PipeDemo {
           context.log.info(s"Fetching the phone number for $name")
           // pipe pattern
           // 1 - have the Future ready
-          val phoneNumberFuture = callExternalService(name)
+          val phoneNumberFuture: Future[Int] = callExternalService(name)
           // 2 - pipe the Future result back to me as a message
           context.pipeToSelf(phoneNumberFuture) {
             case Success(number) => InitiatePhoneCall(number)
@@ -60,6 +60,7 @@ object PipeDemo {
     val userGuardian = Behaviors.setup[Unit] { context =>
       val phoneCallActor = context.spawn(PhoneCallActor(), "phoneCallActor")
 
+      phoneCallActor ! FindAndCallPhoneNumber("Daniel")
       phoneCallActor ! FindAndCallPhoneNumber("Superman")
 
       Behaviors.empty
